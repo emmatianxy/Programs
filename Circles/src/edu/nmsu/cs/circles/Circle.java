@@ -6,9 +6,9 @@ package edu.nmsu.cs.circles;
  **/
 public abstract class Circle
 {
-	protected Point		center;
+	protected Point	center;
 
-	protected double	radius;
+	protected double radius;
 
 	/**
 	 * Create new circle
