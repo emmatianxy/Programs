@@ -21,26 +21,27 @@ package edu.nmsu.cs.webserver;
  *
  **/
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.Scanner;
 import java.util.TimeZone;
 
 public class WebWorker implements Runnable
 {
 
 	private Socket socket;
+	private String filename;
+	private File file;
+	private File root;
 
 	/**
 	 * Constructor: must have a valid open socket
 	 **/
-	public WebWorker(Socket s)
-	{
+	public WebWorker(Socket s) {
 		socket = s;
+		this.root=new File("www");
 	}
 
 	/**
@@ -72,28 +73,28 @@ public class WebWorker implements Runnable
 	/**
 	 * Read the HTTP request header.
 	 **/
-	private void readHTTPRequest(InputStream is)
-	{
+	private void readHTTPRequest(InputStream is) {
 		String line;
 		BufferedReader r = new BufferedReader(new InputStreamReader(is));
-		while (true)
-		{
-			try
-			{
+		int count = 0;
+		while (true) {
+			try {
 				while (!r.ready())
 					Thread.sleep(1);
 				line = r.readLine();
+				if(count == 0) {
+					String[] tokens = line.split(" ");
+					this.filename = tokens[1].substring(1);
+				}
+				count++;
 				System.err.println("Request line: (" + line + ")");
 				if (line.length() == 0)
 					break;
-			}
-			catch (Exception e)
-			{
+			} catch (Exception e) {
 				System.err.println("Request error: " + e);
 				break;
 			}
 		}
-		return;
 	}
 
 	/**
@@ -104,24 +105,29 @@ public class WebWorker implements Runnable
 	 * @param contentType
 	 *          is the string MIME content type (e.g. "text/html")
 	 **/
-	private void writeHTTPHeader(OutputStream os, String contentType) throws Exception
-	{
+	private void writeHTTPHeader(OutputStream os, String contentType) throws Exception {
 		Date d = new Date();
 		DateFormat df = DateFormat.getDateTimeInstance();
 		df.setTimeZone(TimeZone.getTimeZone("GMT"));
-		os.write("HTTP/1.1 200 OK\n".getBytes());
+
+		file = new File(this.root,filename);
+		if(filename.isEmpty() || file.exists()) {
+			os.write("HTTP/1.1 200 OK\n".getBytes());
+		}
+		else {
+			os.write("HTTP/1.1 404 Not Found\n".getBytes());
+		}
 		os.write("Date: ".getBytes());
 		os.write((df.format(d)).getBytes());
 		os.write("\n".getBytes());
-		os.write("Server: Jon's very own server\n".getBytes());
-		// os.write("Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT\n".getBytes());
-		// os.write("Content-Length: 438\n".getBytes());
+		os.write("Server: Tian's very own server\n".getBytes());
 		os.write("Connection: close\n".getBytes());
 		os.write("Content-Type: ".getBytes());
 		os.write(contentType.getBytes());
 		os.write("\n\n".getBytes()); // HTTP header ends with 2 newlines
-		return;
+
 	}
+
 
 	/**
 	 * Write the data content to the client network connection. This MUST be done after the HTTP
@@ -130,11 +136,65 @@ public class WebWorker implements Runnable
 	 * @param os
 	 *          is the OutputStream object to write to
 	 **/
-	private void writeContent(OutputStream os) throws Exception
-	{
-		os.write("<html><head></head><body>\n".getBytes());
-		os.write("<h3>My web server works!</h3>\n".getBytes());
-		os.write("</body></html>\n".getBytes());
+	private void writeContent(OutputStream os) throws Exception {
+		file = new File(this.root,filename);
+		if(!file.exists()) {
+			file = new File("www/404.html");
+			Scanner sc1 = new Scanner(file);
+			while(sc1.hasNext()) {
+				String l = sc1.nextLine();
+				os.write(l.getBytes());
+			}
+			sc1.close();
+		}
+		else {
+			if(get_content_type().equals("text/html")) {
+				Scanner sc = new Scanner(file);
+				while(sc.hasNext()) {
+					String l = sc.nextLine();
+					if(l.contains("<cs371date>")) {
+						Date d1 = new Date();
+						DateFormat df = DateFormat.getDateTimeInstance();
+						df.setTimeZone(TimeZone.getTimeZone("GMT-6:00"));
+						os.write("Date: ".getBytes());
+						os.write((df.format(d1)).getBytes());
+						os.write("\n".getBytes());
+					}
+					if(l.contains("<cs371server>")) {
+						os.write("Server: Tian's very own server\n".getBytes());
+					}
+					os.write(l.getBytes());
+				}
+				sc.close();
+			}
+
+			else {
+				//read file
+				byte[] bFile = new byte[(int) file.length()];
+				FileInputStream fis = new FileInputStream(filename);
+				fis.read(bFile);
+				for(int i = 0; i < bFile.length; i++) {
+					os.write(bFile[i]);
+				}
+				fis.close();
+			}
+		}
 	}
+
+	public String get_content_type() {
+		//accord to current filename get different content type
+		String content_type = null;
+		if(filename.contains(".html")) {
+			content_type = "text/html";
+		} else if(filename.contains(".jpg") || filename.contains(".jpeg")) {
+			content_type = "image/jpg";
+		} else if(filename.contains(".png")) {
+			content_type = "image/png";
+		} else if(filename.contains(".gif"))  {
+			content_type = "image/gif";
+		}
+		return content_type;
+	}
+
 
 } // end class
