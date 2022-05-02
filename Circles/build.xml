@@ -1,0 +1,45 @@
+<!-- Sample Ant build file for Circles -->
+<project name="circles" default="compile" basedir=".">
+    <property name="src" value="src"/>
+    <property name="dest" value="."/>
+    <!-- property to allow ant to find junit -->
+    <property name="libdir" location="lib"/>
+    <property name="junitlibs" location="${libdir}/junit-4.12.jar:${libdir}/hamcrest-core-1.3.jar"/>
+
+    <target name="init">
+    </target>
+
+    <target name="compile" depends="init">
+        <javac srcdir="${src}" destdir="${dest}" classpath="${junitlibs}" includeantruntime="on"/>
+    </target>
+
+    <!-- Execute JUnit tests for Circle1 -->
+    <target name="testCircle1" depends="compile">
+        <java classname="org.junit.runner.JUnitCore" classpath=".:${junitlibs}" fork="true">
+            <arg value="edu.nmsu.cs.circles.Circle1Test"/>
+        </java>
+    </target>
+
+    <!-- Execute JUnit tests for Circle1 -->
+    <target name="testCircle2" depends="compile">
+        <java classname="org.junit.runner.JUnitCore" classpath=".:${junitlibs}" fork="true">
+            <arg value="edu.nmsu.cs.circles.Circle2Test"/>
+        </java>
+    </target>
+
+    <!-- Execute JUnit tests for Circle1 -->
+    <target name="test" depends="compile">
+        <java classname="org.junit.runner.JUnitCore" classpath=".:${junitlibs}" fork="true">
+            <arg value="edu.nmsu.cs.circles.Circle2Test"/>
+            <arg value="edu.nmsu.cs.circles.Circle1Test"/>
+        </java>
+    </target>
+
+    <!-- clean up by removing all generated files; do "ant clean" to start afresh -->
+    <target name="clean">
+        <delete>
+            <fileset dir="${dest}" includes="*.class jacoco.exec"/>
+        </delete>
+    </target>
+
+</project>

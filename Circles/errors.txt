@@ -1,0 +1,15 @@
+Errors list:
+
+1) error found in Circle.java in function ScaleS().
+   Found by Circle1Test through Test Scale().
+   tried to scale by half and test did not pass.
+   found it was logical error and changed + sign to * to correct the logical error.
+
+2) error found in Circle2.java in function Circle2.
+   found by Circle2Test through Test SimpleMove() and SimpleMoveNeg().
+   found that it was a logical error since the Circle1Test showed no problems with intersect the problem is where the passed in parameters were swapped when calling supper.
+   fixed by assigning parameters in same order they are passed in.
+
+3) error found in circle with the SimpleMove() and SimpleMoveNeg() where the offset was incorrect in the moveBy() function.
+   the center.y calculation was using the x.offset instead of the y.offset.
+   changed to the corrected y.offset.
